@@ -38,10 +38,10 @@ Le `GITHUB_TOKEN` nécessite les permissions suivantes :
 
 ## Installation
 
-Installer les dépendances :
+Installer les dépendances avec [uv](https://docs.astral.sh/uv/) (Python 3.13) :
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Utilisation
@@ -49,5 +49,5 @@ pip install -r requirements.txt
 Lancer le bot :
 
 ```bash
-python3 bot.py
+uv run python src/bot_discord_to_github_issues_bot/main.py
 ```

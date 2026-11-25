@@ -1,22 +1,27 @@
-# Utiliser une image Python  
-FROM python:3.11-slim
+# Utiliser l'image uv officielle pour copier le binaire
+FROM ghcr.io/astral-sh/uv:latest AS uv_bin
 
-# Définir le répertoire de travail   
-WORKDIR /app 
+# Image Python de base
+FROM python:3.13-slim
 
-# Copier les fichiers   
-COPY . /app
-COPY requirements.txt ./
+# Définir le répertoire de travail
+WORKDIR /app
 
-# Installer les dépendances 
-RUN apt-get update && \ 
-    apt-get install -y --no-install-recommends && \ 
-    pip install --no-cache-dir -r requirements.txt && \ 
-    apt-get remove -y gcc libc-dev && \ 
-    rm requirements.txt && \ 
-    apt-get clean && \ 
-    apt-get autoremove -y && \ 
-    rm -rf /var/lib/apt/lists/* 
+# Copier le binaire uv
+COPY --from=uv_bin /uv /uvx /bin/
 
-# Lancer l’application  
-CMD ["python", "src/bot_discord_to_github_issues_bot/main.py"]
+# Configuration environnement uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
+
+# Installer les dépendances d'abord pour le cache Docker
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --no-dev
+
+# Copier le code source
+COPY . .
+RUN uv sync --frozen --no-dev
+
+# Lancer l'application
+CMD ["uv", "run", "python", "src/bot_discord_to_github_issues_bot/main.py"]
